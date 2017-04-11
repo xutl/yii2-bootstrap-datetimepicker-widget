@@ -32,4 +32,30 @@ class DatetimePickerAsset extends AssetBundle
     public $depends = [
         'yii\bootstrap\BootstrapPluginAsset',
     ];
+
+    /**
+     * @var boolean whether to automatically generate the needed language js files.
+     */
+    public $autoGenerate = true;
+
+    /**
+     * @var string language to register translation file for
+     */
+    public $language;
+
+    /**
+     * @inheritdoc
+     */
+    public function registerAssetFiles($view)
+    {
+        if ($this->autoGenerate) {
+            $language = $this->language;
+            $fallbackLanguage = substr($this->language, 0, 2);
+            if ($fallbackLanguage !== $this->language && !file_exists(Yii::getAlias($this->sourcePath . "js/locales/bootstrap-datetimepicker.{$language}.js"))) {
+                $language = $fallbackLanguage;
+            }
+            $this->js[] = "js/locales/bootstrap-datetimepicker.$language.js";
+        }
+        parent::registerAssetFiles($view);
+    }
 }
