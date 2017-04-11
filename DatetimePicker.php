@@ -61,7 +61,7 @@ class DatetimePicker extends InputWidget
         echo Html::endTag('div');
         $view = $this->getView();
         $assetBundle = DatetimePickerAsset::register($view);
-        $assetBundle->language = $language;
+        $assetBundle->language = $this->clientOptions['language'] = $language;
         $options = empty ($this->clientOptions) ? '' : Json::htmlEncode($this->clientOptions);
         $this->view->registerJs("jQuery(\"#{$this->options['id']}\").datetimepicker({$options});");
     }
