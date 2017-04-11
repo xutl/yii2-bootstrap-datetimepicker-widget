@@ -14,5 +14,14 @@ use yii\widgets\InputWidget;
  */
 class DatetimePicker extends InputWidget
 {
-
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        parent::init();
+        if (!isset ($this->options ['id'])) {
+            $this->options ['id'] = $this->getId();
+        }
+    }
 }
