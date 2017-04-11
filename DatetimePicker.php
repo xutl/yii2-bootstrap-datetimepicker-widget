@@ -33,8 +33,15 @@ class DatetimePicker extends InputWidget
         if (!isset ($this->options ['id'])) {
             $this->options ['id'] = $this->getId();
         }
-
+        if (!isset($this->options['class'])) {
+            $this->options['class'] = 'form-control';
+        }
         $this->clientOptions = array_merge([
+            'weekStart' => 1,
+            'autoclose' => true,
+            'minView' => 'hour',
+            'todayBtn' => true,
+            'todayHighlight' => true,
             'format' => 'yyyy-mm-dd hh:ii',
         ], $this->clientOptions);
     }
@@ -45,11 +52,13 @@ class DatetimePicker extends InputWidget
     public function run()
     {
         $language = $this->language ? $this->language : Yii::$app->language;
+        echo Html::beginTag('div', ['class' => 'input-append date']);
         if ($this->hasModel()) {
             echo Html::activeTextInput($this->model, $this->attribute, $this->options);
         } else {
             echo Html::textInput($this->name, $this->value, $this->options);
         }
+        echo Html::endTag('div');
         $view = $this->getView();
         $assetBundle = DatetimePickerAsset::register($view);
         $assetBundle->language = $language;
