@@ -6,8 +6,13 @@
  */
 namespace xutl\bootstrap\datetimepicker;
 
+use Yii;
 use yii\web\AssetBundle;
 
+/**
+ * Class DatetimePickerAsset
+ * @package xutl\bootstrap\datetimepicker
+ */
 class DatetimePickerAsset extends AssetBundle
 {
     /**
@@ -15,7 +20,7 @@ class DatetimePickerAsset extends AssetBundle
      */
     public $sourcePath = '@vendor/xutl/yii2-bootstrap-datetimepicker-widget/assets';
 
-	/**
+    /**
      * @inherit
      */
     public $css = [
@@ -51,7 +56,7 @@ class DatetimePickerAsset extends AssetBundle
         if ($this->autoGenerate) {
             $language = $this->language;
             $fallbackLanguage = substr($this->language, 0, 2);
-            if ($fallbackLanguage !== $this->language && !file_exists(Yii::getAlias($this->sourcePath . "js/locales/bootstrap-datetimepicker.{$language}.js"))) {
+            if ($fallbackLanguage !== $this->language && !file_exists(Yii::getAlias($this->sourcePath . "/js/locales/bootstrap-datetimepicker.{$language}.js"))) {
                 $language = $fallbackLanguage;
             }
             $this->js[] = "js/locales/bootstrap-datetimepicker.$language.js";
