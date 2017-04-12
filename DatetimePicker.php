@@ -10,8 +10,8 @@ namespace xutl\bootstrap\datetimepicker;
 use Yii;
 use yii\helpers\Html;
 use yii\helpers\Json;
-use yii\web\JsExpression;
 use yii\widgets\InputWidget;
+use yii\base\InvalidParamException;
 
 /**
  * Class DatetimePicker
@@ -22,6 +22,31 @@ class DatetimePicker extends InputWidget
 
     public $language;
 
+    /**
+     * @var boolean If true, shows the widget as an inline calendar and the input as a hidden field.
+     */
+    public $inline = false;
+
+    public $containerOptions = [];
+
+    public $datetimeFormat;
+
+    public $clientDatetimeFormat;
+
+    /**
+     * @var string the model attribute that this widget is associated with.
+     * The value of the attribute will be converted using [[\yii\i18n\Formatter::asDate()|`Yii::$app->formatter->asDate()`]]
+     * with the [[dateFormat]] if it is not null.
+     */
+    public $attribute;
+
+    /**
+     * @var string the input value.
+     * This value will be converted using [[\yii\i18n\Formatter::asDate()|`Yii::$app->formatter->asDate()`]]
+     * with the [[dateFormat]] if it is not null.
+     */
+    public $value;
+
     public $clientOptions = [];
 
     /**
@@ -30,39 +55,80 @@ class DatetimePicker extends InputWidget
     public function init()
     {
         parent::init();
-        if (!isset ($this->options ['id'])) {
-            $this->options ['id'] = $this->getId();
+        if ($this->inline && !isset($this->containerOptions['id'])) {
+            $this->containerOptions['id'] = $this->options['id'] . '-container';
         }
-        if (!isset($this->options['class'])) {
-            $this->options['class'] = 'form-control';
+        if ($this->datetimeFormat === null) {
+            $this->datetimeFormat = Yii::$app->formatter->datetimeFormat;
         }
-        $this->clientOptions = array_merge([
-            'weekStart' => 1,
-            'autoclose' => true,
-            'minView' => 'hour',
-            'todayBtn' => true,
-            'todayHighlight' => true,
-            'format' => 'yyyy-mm-dd hh:ii',
-        ], $this->clientOptions);
+
+        $this->clientOptions['format'] = $this->clientDatetimeFormat;
     }
 
     /**
-     * @inheritdoc
+     * Renders the widget.
      */
     public function run()
     {
+        echo $this->renderWidget() . "\n";
+
+        $containerID = $this->inline ? $this->containerOptions['id'] : $this->options['id'];
         $language = $this->language ? $this->language : Yii::$app->language;
-        echo Html::beginTag('div', ['class' => 'input-append date']);
-        if ($this->hasModel()) {
-            echo Html::activeTextInput($this->model, $this->attribute, $this->options);
-        } else {
-            echo Html::textInput($this->name, $this->value, $this->options);
-        }
-        echo Html::endTag('div');
         $view = $this->getView();
         $assetBundle = DatetimePickerAsset::register($view);
-        $assetBundle->language = $this->clientOptions['language'] = $language;
-        $options = empty ($this->clientOptions) ? '' : Json::htmlEncode($this->clientOptions);
-        $this->view->registerJs("jQuery(\"#{$this->options['id']}\").datetimepicker({$options});");
+        if ($language !== 'en-US') {
+            $assetBundle->language = $language;
+            $this->clientOptions['language'] = $language;
+        }
+        $options = Json::htmlEncode($this->clientOptions);
+        $this->view->registerJs("jQuery(\"#{$containerID}\").datetimepicker({$options});");
+    }
+
+    /**
+     * Renders the DatePicker widget.
+     * @return string the rendering result.
+     */
+    protected function renderWidget()
+    {
+        $contents = [];
+
+        // get formatted date value
+        if ($this->hasModel()) {
+            $value = Html::getAttributeValue($this->model, $this->attribute);
+        } else {
+            $value = $this->value;
+        }
+        if ($value !== null && $value !== '') {
+            // format value according to dateFormat
+            try {
+                $value = Yii::$app->formatter->asDatetime($value, $this->datetimeFormat);
+            } catch (InvalidParamException $e) {
+                // ignore exception and keep original value if it is not a valid date
+            }
+        }
+        $options = $this->options;
+        $options['value'] = $value;
+
+        if ($this->inline === false) {
+            // render a text input
+            if ($this->hasModel()) {
+                $contents[] = Html::activeTextInput($this->model, $this->attribute, $options);
+            } else {
+                $contents[] = Html::textInput($this->name, $value, $options);
+            }
+        } else {
+            // render an inline date picker with hidden input
+            if ($this->hasModel()) {
+                $contents[] = Html::activeHiddenInput($this->model, $this->attribute, $options);
+            } else {
+                $contents[] = Html::hiddenInput($this->name, $value, $options);
+            }
+            $this->clientOptions['initialDate'] = $value;
+            $this->clientOptions['linkField'] = $this->options['id'];
+            $this->clientOptions['linkFormat'] = $this->clientOptions['format'];
+            $contents[] = Html::tag('div', null, $this->containerOptions);
+        }
+
+        return implode("\n", $contents);
     }
 }
