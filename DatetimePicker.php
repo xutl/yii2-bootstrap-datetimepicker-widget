@@ -10,8 +10,10 @@ namespace xutl\bootstrap\datetimepicker;
 use Yii;
 use yii\helpers\Html;
 use yii\helpers\Json;
+use yii\helpers\ArrayHelper;
 use yii\widgets\InputWidget;
 use yii\base\InvalidParamException;
+use yii\base\InvalidConfigException;
 
 /**
  * Class DatetimePicker
@@ -29,8 +31,6 @@ class DatetimePicker extends InputWidget
 
     public $containerOptions = [];
 
-    public $datetimeFormat;
-
     public $clientDatetimeFormat;
 
     /**
@@ -47,6 +47,20 @@ class DatetimePicker extends InputWidget
      */
     public $value;
 
+    /**
+     * @var string php datetime Format
+     */
+    public $datetimeFormat = 'Y-m-d H:i:s';
+
+    /**
+     * @var array
+     */
+    protected $datetimeMapping = [
+        "Y-m-d" => 'yyyy-mm-dd', // 2014-05-14 13:55
+        "Y-m-d H:i" => 'yyyy-mm-dd hh:ii', // 2014-05-14 13:55
+        "Y-m-d H:i:s" => 'yyyy-mm-dd hh:ii:ss', // 2014-05-14 13:55:50
+    ];
+
     public $clientOptions = [];
 
     /**
@@ -58,10 +72,17 @@ class DatetimePicker extends InputWidget
         if ($this->inline && !isset($this->containerOptions['id'])) {
             $this->containerOptions['id'] = $this->options['id'] . '-container';
         }
-        if ($this->datetimeFormat === null) {
-            $this->datetimeFormat = Yii::$app->formatter->datetimeFormat;
-        }
+        $this->options = ArrayHelper::merge([
+            'class' => 'form-control',
+        ], $this->options);
 
+        $this->clientDatetimeFormat = $this->clientDatetimeFormat ?: ArrayHelper::getValue(
+            $this->datetimeMapping,
+            $this->datetimeFormat
+        );
+        if (!$this->clientDatetimeFormat) {
+            throw new InvalidConfigException('Please set datetime format');
+        }
         $this->clientOptions['format'] = $this->clientDatetimeFormat;
     }
 
@@ -101,7 +122,7 @@ class DatetimePicker extends InputWidget
         if ($value !== null && $value !== '') {
             // format value according to dateFormat
             try {
-                $value = Yii::$app->formatter->asDatetime($value, $this->datetimeFormat);
+                $value = Yii::$app->formatter->asDatetime($value, 'php:'.$this->datetimeFormat);
             } catch (InvalidParamException $e) {
                 // ignore exception and keep original value if it is not a valid date
             }
