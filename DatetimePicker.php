@@ -74,6 +74,7 @@ class DatetimePicker extends InputWidget
         }
         $this->options = ArrayHelper::merge([
             'class' => 'form-control',
+            'readonly' => 'readonly',
         ], $this->options);
 
         $this->clientDatetimeFormat = $this->clientDatetimeFormat ?: ArrayHelper::getValue(
